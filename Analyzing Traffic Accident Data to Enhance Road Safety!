@@ -1,0 +1,61 @@
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+# Load the dataset
+file_path = r'D:\7th sem btech\US_Accidents_March23.csv'  # Use raw string
+data = pd.read_csv(file_path)
+
+# Data Cleaning
+# Check for missing values
+print(data.isnull().sum())
+
+# Fill missing values or drop columns/rows with significant missing data
+data['Weather_Condition'].fillna('Unknown', inplace=True)
+data['Road_Condition'].fillna('Unknown', inplace=True)
+data.dropna(subset=['Start_Lat', 'Start_Lng'], inplace=True)
+
+# Convert data types if necessary
+data['Weather_Condition'] = data['Weather_Condition'].astype('category')
+data['Road_Condition'] = data['Road_Condition'].astype('category')
+data['Start_Time'] = pd.to_datetime(data['Start_Time'])
+
+# Exploratory Data Analysis (EDA)
+# Univariate Analysis
+plt.figure(figsize=(10, 6))
+sns.countplot(x='Weather_Condition', data=data)
+plt.title('Accidents by Weather Condition')
+plt.xlabel('Weather Condition')
+plt.ylabel('Count')
+plt.xticks(rotation=45)
+plt.show()
+
+# Bivariate Analysis
+plt.figure(figsize=(10, 6))
+sns.countplot(x='Road_Condition', hue='Weather_Condition', data=data)
+plt.title('Accidents by Road Condition and Weather')
+plt.xlabel('Road Condition')
+plt.ylabel('Count')
+plt.xticks(rotation=45)
+plt.show()
+
+# Multivariate Analysis
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='Start_Time', y='Severity', hue='Weather_Condition', style='Road_Condition', data=data)
+plt.title('Accidents by Time of Day, Severity, Weather, and Road Condition')
+plt.xlabel('Time of Day')
+plt.ylabel('Severity')
+plt.show()
+
+# Visualization of Accident Hotspots
+# Create a map of accident hotspots
+map_center = [data['Start_Lat'].mean(), data['Start_Lng'].mean()]
+accident_map = folium.Map(location=map_center, zoom_start=12)
+
+for idx, row in data.iterrows():
+    folium.Marker([row['Start_Lat'], row['Start_Lng']], 
+                  popup=f"Severity: {row['Severity']}, Weather: {row['Weather_Condition']}, Road: {row['Road_Condition']}").add_to(accident_map)
+
+accident_map.save('accident_hotspots.html')
